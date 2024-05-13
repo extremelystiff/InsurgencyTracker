@@ -62,7 +62,7 @@
   <h1>Insurgency Tracker Data</h1>
   
   <div class="input-container">
-    <input type="text" id="steamIdInput" placeholder="Enter your Steam64 ID">
+    <input type="text" id="steamIdInput" placeholder="Enter your Steam Username or Steam64 ID">
     <button onclick="fetchData()">Fetch Data</button>
   </div>
   
@@ -98,7 +98,7 @@
   <script>
     function fetchData() {
       const steamId = document.getElementById('steamIdInput').value;
-      const url = `https://script.google.com/macros/s/AKfycbw2Q0LmZjAelzXiEHbk3pSDl_jC6MJ5bJaOStUrlRB_PEAS0civ0-ZPlOP0EZQqT5F3/exec?userId=${steamId}`;
+      const url = `https://script.google.com/macros/s/AKfycbyWO806MC9CrVOAyIVyEELGPxRySMrFsQuZD4ypizG1U_DJ8eu_LDM7C-HsaDBJ2Tuq/exec?input=${steamId}`;
       
       fetch(url)
         .then(response => response.json())
