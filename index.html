@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insurgency Tracker Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+    }
+    
+    .input-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .input-container input {
+      padding: 10px;
+      font-size: 16px;
+      width: 300px;
+      margin-right: 10px;
+    }
+    
+    .input-container button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .data-container {
+      margin-top: 20px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Insurgency Tracker Data</h1>
+  
+  <div class="input-container">
+    <input type="text" id="steamIdInput" placeholder="Enter your Steam64 ID">
+    <button onclick="fetchData()">Fetch Data</button>
+  </div>
+  
+  <div class="data-container">
+    <h2>Overall Stats</h2>
+    <p>Score per Minute: <span id="scorePerMinute"></span></p>
+    <p>K/D: <span id="kd"></span></p>
+    <p>Kills: <span id="kills"></span></p>
+    <p>Kills per Minute: <span id="killsPerMinute"></span></p>
+    <p>Win Percentage: <span id="winPercentage"></span>%</p>
+    <p>Matches Won: <span id="matchesWon"></span></p>
+    
+    <h2>Weapon Stats</h2>
+    <table id="weaponStatsTable">
+      <thead>
+        <tr>
+          <th>Weapon Name</th>
+          <th>Kills</th>
+          <th>Kills per Minute</th>
+          <th>Time</th>
+          <th>Shots</th>
+          <th>Shots Hit</th>
+          <th>Accuracy</th>
+          <th>Headshots</th>
+          <th>Headshot Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/cheerio@1.0.0-rc.10/dist/cheerio.min.js"></script>
+  <script>
+    function fetchData() {
+      const steamId = document.getElementById('steamIdInput').value;
+      const url = `https://www.insurgencytracker.com/profile/SteamNWI/${steamId}/Pvp`;
+      
+      fetch(url)
+        .then(response => response.text())
+        .then(html => {
+          const $ = cheerio.load(html);
+          
+          const scorePerMinute = parseFloat($('.widget-bg-color-icon:contains("Score per minute") .h3').text());
+          const kd = parseFloat($('.widget-bg-color-icon:contains("K/D") .h3').text());
+          const kills = parseInt($('.widget-bg-color-icon:contains("Kills") .h3').text().replace(/,/g, ''));
+          const killsPerMinute = parseFloat($('.widget-bg-color-icon:contains("Kills per minute") .h3').text());
+          const winPercentage = parseFloat($('.widget-bg-color-icon:contains("Win %") .h3').text().replace('%', ''));
+          const matchesWon = parseInt($('.widget-bg-color-icon:contains("Matches won") .h3').text().replace(/,/g, ''));
+          
+          const weaponStats = [];
+          $('#weaponTable tbody tr').each(function() {
+            const weaponName = $(this).find('td:nth-child(2)').text().trim();
+            const kills = parseInt($(this).find('td:nth-child(3)').text().replace(/,/g, ''));
+            const killsPerMinute = parseFloat($(this).find('td:nth-child(4)').text());
+            const time = $(this).find('td:nth-child(5)').text().trim();
+            const shots = parseInt($(this).find('td:nth-child(6)').text().replace(/,/g, ''));
+            const shotsHit = parseInt($(this).find('td:nth-child(7)').text().replace(/,/g, ''));
+            const accuracy = parseFloat($(this).find('td:nth-child(8)').text().replace('%', ''));
+            const headshots = parseInt($(this).find('td:nth-child(9)').text().replace(/,/g, ''));
+            const headshotPercentage = parseFloat($(this).find('td:nth-child(10)').text().replace('%', ''));
+            
+            weaponStats.push({
+              weaponName: weaponName,
+              kills: kills,
+              killsPerMinute: killsPerMinute,
+              time: time,
+              shots: shots,
+              shotsHit: shotsHit,
+              accuracy: accuracy,
+              headshots: headshots,
+              headshotPercentage: headshotPercentage
+            });
+          });
+          
+          document.getElementById('scorePerMinute').textContent = scorePerMinute;
+          document.getElementById('kd').textContent = kd;
+          document.getElementById('kills').textContent = kills;
+          document.getElementById('killsPerMinute').textContent = killsPerMinute;
+          document.getElementById('winPercentage').textContent = winPercentage;
+          document.getElementById('matchesWon').textContent = matchesWon;
+          
+          const weaponStatsTable = document.getElementById('weaponStatsTable');
+          const tbody = weaponStatsTable.querySelector('tbody');
+          tbody.innerHTML = '';
+          
+          weaponStats.forEach(weapon => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${weapon.weaponName}</td>
+              <td>${weapon.kills}</td>
+              <td>${weapon.killsPerMinute}</td>
+              <td>${weapon.time}</td>
+              <td>${weapon.shots}</td>
+              <td>${weapon.shotsHit}</td>
+              <td>${weapon.accuracy}%</td>
+              <td>${weapon.headshots}</td>
+              <td>${weapon.headshotPercentage}%</td>
+            `;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+    }
+  </script>
+</body>
+</html>
